@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-    <title>Encrypt and Decrypt</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>メッセージ暗号化/復号化プログラム</title>
 </head>
 <body>
-    <h1>Encrypt and Decrypt</h1>
-
     <h2>Commands:</h2>
     <p>1. <strong>encrypt/message/password:</strong> メッセージを暗号化します。</p>
     <p>2. <strong>decrypt/password:</strong> 暗号文を復号化します。</p>
@@ -46,25 +46,38 @@
 
         function decryptMessage(encryptedValue, password) {
             const passwordCodes = splitPassword(password);
-            const repeatedPassword = (passwordCodes.concat(...Array(Math.floor(encryptedValue.length / passwordCodes.length)).fill(passwordCodes))).concat(passwordCodes.slice(0, encryptedValue.length % passwordCodes.length));
+            const passwordLength = passwordCodes.length;
+            let decryptedMessage = "";
 
-            const decryptedMessageUnicode = [];
             for (let i = 0; i < encryptedValue.length; i += 2) {
                 const diff = encryptedValue[i];
                 const bigger = encryptedValue[i + 1];
+                const passwordIndex = Math.floor(i / 2) % passwordLength;
+
+                let decryptedChar;
                 if (bigger === 1) {
-                    decryptedMessageUnicode.push(repeatedPassword[i / 2] + diff);
+                    decryptedChar = String.fromCharCode(passwordCodes[passwordIndex] + diff);
                 } else {
-                    decryptedMessageUnicode.push(repeatedPassword[i / 2] - diff);
+                    decryptedChar = String.fromCharCode(passwordCodes[passwordIndex] - diff);
                 }
+
+                decryptedMessage += decryptedChar;
             }
 
-            const decryptedMessage = String.fromCharCode(...decryptedMessageUnicode);
             return decryptedMessage;
         }
 
         function printHelp() {
             return "コマンド一覧:\n- encrypt/message/password: メッセージを暗号化します。\n- decrypt/password: 暗号文を復号化します。\n- help: ヘルプを表示します。\n- exit: プログラムを終了します。\n\nコマンドの文型と例:\n1. encrypt/message/password:\n- 文型: encrypt/HelloWorld/MySecretPassword\n- 例: encrypt/HelloWorld/MySecretPassword\n2. decrypt/password:\n- 文型: decrypt/暗号化された値\n- 例: decrypt/[8, 1, 2, 0, 5, 1, 1, 1, 0, 2]\n3. help:\n- 文型: help\n- 例: help\n4. exit:\n- 文型: exit\n- 例: exit";
+        }
+
+        function copyToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand("copy");
+            document.body.removeChild(textArea);
         }
 
         function main() {
@@ -88,23 +101,13 @@
                         const password = args[2];
                         const encryptedValue = encryptMessage(message, password);
                         outputArea.textContent = "暗号化された値: " + JSON.stringify(encryptedValue);
+                        // 暗号文をクリップボードにコピー
+                        copyToClipboard(JSON.stringify(encryptedValue));
                     } else {
                         outputArea.textContent = "コマンドの引数が不正です。";
                     }
                 } else if (command.startsWith("decrypt/")) {
-                    const args = command.split("/");
-                    if (args.length === 2) {
-                        const encryptedValue = JSON.parse(args[1]);
-                        const password = prompt("パスワードを入力してください: ");
-                        if (password === null) {
-                            outputArea.textContent = "パスワードが必要です。";
-                        } else {
-                            const decryptedMessage = decryptMessage(encryptedValue, password);
-                            outputArea.textContent = "復号化されたメッセージ: " + decryptedMessage;
-                        }
-                    } else {
-                        outputArea.textContent = "コマンドの引数が不正です。";
-                    }
+                    // ...
                 } else {
                     outputArea.textContent = "無効なコマンドです。";
                 }
